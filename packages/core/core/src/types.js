@@ -224,10 +224,10 @@ export function fromNodeId(x: NodeId): number {
 
 export type ContentKey = string;
 
-export type Edge<TEdgeType: string | null> = {|
+export type Edge = {|
   from: NodeId,
   to: NodeId,
-  type: TEdgeType,
+  type: number,
 |};
 
 export interface Node {

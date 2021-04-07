@@ -124,12 +124,12 @@ describe('AssetGraph', () => {
       {
         from: graph.rootNodeId,
         to: graph.getNodeIdByContentKey('entry_specifier:/path/to/index1'),
-        type: null,
+        type: 0,
       },
       {
         from: graph.rootNodeId,
         to: graph.getNodeIdByContentKey('entry_specifier:/path/to/index2'),
-        type: null,
+        type: 0,
       },
       {
         from: graph.getNodeIdByContentKey('entry_specifier:/path/to/index1'),
@@ -139,7 +139,7 @@ describe('AssetGraph', () => {
             packagePath: '/path/to/index1',
           }).id,
         ),
-        type: null,
+        type: 0,
       },
       {
         from: graph.getNodeIdByContentKey('entry_specifier:/path/to/index2'),
@@ -149,7 +149,7 @@ describe('AssetGraph', () => {
             packagePath: '/path/to/index2',
           }).id,
         ),
-        type: null,
+        type: 0,
       },
       {
         from: graph.getNodeIdByContentKey(
@@ -165,7 +165,7 @@ describe('AssetGraph', () => {
             env: DEFAULT_ENV,
           }).id,
         ),
-        type: null,
+        type: 0,
       },
       {
         from: graph.getNodeIdByContentKey(
@@ -181,7 +181,7 @@ describe('AssetGraph', () => {
             env: DEFAULT_ENV,
           }).id,
         ),
-        type: null,
+        type: 0,
       },
     ]);
   });

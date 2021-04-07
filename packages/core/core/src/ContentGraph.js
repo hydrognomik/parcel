@@ -4,21 +4,15 @@ import Graph, {type GraphOpts} from './Graph';
 import type {ContentKey, Node, NodeId} from './types';
 import nullthrows from 'nullthrows';
 
-export type SerializedContentGraph<
-  TNode: Node,
-  TEdgeType: string | null = null,
-> = {|
-  ...GraphOpts<TNode, TEdgeType>,
+export type SerializedContentGraph<TNode: Node> = {|
+  ...GraphOpts<TNode>,
   _contentKeyToNodeId: Map<ContentKey, NodeId>,
 |};
 
-export default class ContentGraph<
-  TNode: Node,
-  TEdgeType: string | null = null,
-> extends Graph<TNode, TEdgeType> {
+export default class ContentGraph<TNode: Node> extends Graph<TNode> {
   _contentKeyToNodeId: Map<ContentKey, NodeId>;
 
-  constructor(opts: ?SerializedContentGraph<TNode, TEdgeType>) {
+  constructor(opts: ?SerializedContentGraph<TNode>) {
     if (opts) {
       let {_contentKeyToNodeId, ...rest} = opts;
       super(rest);
@@ -30,14 +24,12 @@ export default class ContentGraph<
   }
 
   // $FlowFixMe[prop-missing]
-  static deserialize(
-    opts: SerializedContentGraph<TNode, TEdgeType>,
-  ): ContentGraph<TNode, TEdgeType> {
+  static deserialize(opts: SerializedContentGraph<TNode>): ContentGraph<TNode> {
     return new ContentGraph(opts);
   }
 
   // $FlowFixMe[prop-missing]
-  serialize(): SerializedContentGraph<TNode, TEdgeType> {
+  serialize(): SerializedContentGraph<TNode> {
     return {
       ...super.serialize(),
       _contentKeyToNodeId: this._contentKeyToNodeId,

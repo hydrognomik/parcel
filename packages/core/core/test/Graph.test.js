@@ -87,7 +87,7 @@ describe('Graph', () => {
     let nodeB = graph.addNode({id: 'b', type: 'mynode', value: 'b'});
     let nodeC = graph.addNode({id: 'c', type: 'mynode', value: 'c'});
     graph.addEdge(nodeA, nodeB);
-    graph.addEdge(nodeA, nodeC, 'edgetype');
+    graph.addEdge(nodeA, nodeC, 1);
     assert(graph._isOrphanedNode(nodeA));
     assert(!graph._isOrphanedNode(nodeB));
     assert(!graph._isOrphanedNode(nodeC));
@@ -115,7 +115,7 @@ describe('Graph', () => {
     assert(!graph.nodes.has(nodeB));
     assert(!graph.nodes.has(nodeC));
     assert.deepEqual(graph.getAllEdges(), [
-      {from: nodeA, to: nodeD, type: null},
+      {from: nodeA, to: nodeD, type: 0},
     ]);
   });
 
@@ -157,8 +157,8 @@ describe('Graph', () => {
 
     assert.deepEqual([...graph.nodes.keys()], [nodeA, nodeC, nodeF]);
     assert.deepEqual(graph.getAllEdges(), [
-      {from: nodeA, to: nodeC, type: null},
-      {from: nodeC, to: nodeF, type: null},
+      {from: nodeA, to: nodeC, type: 0},
+      {from: nodeC, to: nodeF, type: 0},
     ]);
   });
 
@@ -202,8 +202,8 @@ describe('Graph', () => {
 
     assert.deepEqual([...graph.nodes.keys()], [nodeA, nodeC, nodeF]);
     assert.deepEqual(graph.getAllEdges(), [
-      {from: nodeA, to: nodeC, type: null},
-      {from: nodeC, to: nodeF, type: null},
+      {from: nodeA, to: nodeC, type: 0},
+      {from: nodeC, to: nodeF, type: 0},
     ]);
   });
 
@@ -237,11 +237,11 @@ describe('Graph', () => {
 
     assert.deepEqual(nodesBefore, getNodeIds());
     assert.deepEqual(graph.getAllEdges(), [
-      {from: nodeA, to: nodeB, type: null},
-      {from: nodeB, to: nodeC, type: null},
-      {from: nodeB, to: nodeD, type: null},
-      {from: nodeD, to: nodeE, type: null},
-      {from: nodeE, to: nodeB, type: null},
+      {from: nodeA, to: nodeB, type: 0},
+      {from: nodeB, to: nodeC, type: 0},
+      {from: nodeB, to: nodeD, type: 0},
+      {from: nodeD, to: nodeE, type: 0},
+      {from: nodeE, to: nodeB, type: 0},
     ]);
   });
 
@@ -280,8 +280,8 @@ describe('Graph', () => {
     assert(!graph.hasNode(nodeC));
     assert(graph.hasNode(nodeD));
     assert.deepEqual(graph.getAllEdges(), [
-      {from: nodeA, to: nodeB, type: null},
-      {from: nodeA, to: nodeD, type: null},
+      {from: nodeA, to: nodeB, type: 0},
+      {from: nodeA, to: nodeD, type: 0},
     ]);
   });
 
@@ -292,10 +292,10 @@ describe('Graph', () => {
     let nodeC = graph.addNode({id: 'c', type: 'mynode', value: 'c'});
     let nodeD = graph.addNode({id: 'd', type: 'mynode', value: 'd'});
 
-    graph.addEdge(nodeA, nodeB, 'edgetype');
+    graph.addEdge(nodeA, nodeB, 1);
     graph.addEdge(nodeA, nodeD);
     graph.addEdge(nodeB, nodeC);
-    graph.addEdge(nodeB, nodeD, 'edgetype');
+    graph.addEdge(nodeB, nodeD, 1);
 
     graph.rootNodeId = nodeA;
 
@@ -305,7 +305,7 @@ describe('Graph', () => {
         visited.push(nodeId);
       },
       null, // use root as startNode
-      'edgetype',
+      1,
     );
 
     assert.deepEqual(visited, [nodeA, nodeB, nodeD]);
