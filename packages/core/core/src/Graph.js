@@ -7,11 +7,11 @@ import type {TraversalActions, GraphVisitor} from '@parcel/types';
 import assert from 'assert';
 import nullthrows from 'nullthrows';
 
-export type GraphOpts<TNode> = {|
+export type GraphOpts<TNode, TEdgeType: number  = 0> = {|
   nodes?: Map<NodeId, TNode>,
   edges?: {|
-    inboundEdges: AdjacencyListMap,
-    outboundEdges: AdjacencyListMap,
+    inboundEdges: AdjacencyListMap<TEdgeType>,
+    outboundEdges: AdjacencyListMap<TEdgeType>,
   |},
   rootNodeId?: ?NodeId,
   nextNodeId?: ?number,
@@ -19,14 +19,14 @@ export type GraphOpts<TNode> = {|
 
 export const ALL_EDGE_TYPES = '@@all_edge_types';
 
-export default class Graph<TNode: Node> {
+export default class Graph<TNode: Node, TEdgeType: number = 0> {
   nodes: Map<NodeId, TNode>;
-  inboundEdges: AdjacencyList;
-  outboundEdges: AdjacencyList;
+  inboundEdges: AdjacencyList<TEdgeType>;
+  outboundEdges: AdjacencyList<TEdgeType>;
   rootNodeId: ?NodeId;
   nextNodeId: number = 0;
 
-  constructor(opts?: GraphOpts<TNode>) {
+  constructor(opts?: GraphOpts<TNode, TEdgeType>) {
     this.nodes = opts?.nodes || new Map();
     this.rootNodeId = opts?.rootNodeId;
     this.nextNodeId = opts?.nextNodeId ?? 0;
@@ -42,8 +42,8 @@ export default class Graph<TNode: Node> {
   }
 
   static deserialize(
-    opts: GraphOpts<TNode>,
-  ): Graph<TNode> {
+    opts: GraphOpts<TNode, TEdgeType>,
+  ): Graph<TNode, TEdgeType> {
     return new this({
       nodes: opts.nodes,
       edges: opts.edges,
@@ -52,7 +52,7 @@ export default class Graph<TNode: Node> {
     });
   }
 
-  serialize(): GraphOpts<TNode> {
+  serialize(): GraphOpts<TNode, TEdgeType> {
     return {
       nodes: this.nodes,
       edges: {
@@ -92,7 +92,7 @@ export default class Graph<TNode: Node> {
     return this.nodes.get(id);
   }
 
-  addEdge(from: NodeId, to: NodeId, type: number = 0): void {
+  addEdge(from: NodeId, to: NodeId, type: TEdgeType = 0): void {
     if (!this.getNode(from)) {
       throw new Error(`"from" node '${fromNodeId(from)}' not found`);
     }
@@ -105,13 +105,13 @@ export default class Graph<TNode: Node> {
     this.inboundEdges.addEdge(to, from, type);
   }
 
-  hasEdge(from: NodeId, to: NodeId, type?: number = 0): boolean {
+  hasEdge(from: NodeId, to: NodeId, type?: TEdgeType = 0): boolean {
     return this.outboundEdges.hasEdge(from, to, type);
   }
 
   getNodeIdsConnectedTo(
     nodeId: NodeId,
-    type: number | Array<number> = 0,
+    type: TEdgeType | Array<TEdgeType> = 0,
   ): Array<NodeId> {
     this._assertHasNodeId(nodeId);
 
@@ -144,7 +144,7 @@ export default class Graph<TNode: Node> {
 
   getNodeIdsConnectedFrom(
     nodeId: NodeId,
-    type: number | Array<number> = 0,
+    type: TEdgeType | Array<TEdgeType> = 0,
   ): Array<NodeId> {
     this._assertHasNodeId(nodeId);
     let outboundByType = this.outboundEdges.getEdgesByType(nodeId);
@@ -201,7 +201,7 @@ export default class Graph<TNode: Node> {
     assert(wasRemoved);
   }
 
-  removeEdges(nodeId: NodeId, type: number = 0) {
+  removeEdges(nodeId: NodeId, type: TEdgeType = 0) {
     this._assertHasNodeId(nodeId);
 
     for (let to of this.outboundEdges.getEdges(nodeId, type)) {
@@ -213,7 +213,7 @@ export default class Graph<TNode: Node> {
   removeEdge(
     from: NodeId,
     to: NodeId,
-    type: number = 0,
+    type: TEdgeType = 0,
     removeOrphans: boolean = true,
   ) {
     if (!this.outboundEdges.hasEdge(from, to, type)) {
@@ -285,7 +285,7 @@ export default class Graph<TNode: Node> {
   replaceNode(
     fromNodeId: NodeId,
     toNodeId: NodeId,
-    type: number = 0,
+    type: TEdgeType = 0,
   ): void {
     this._assertHasNodeId(fromNodeId);
     for (let parent of this.inboundEdges.getEdges(fromNodeId, type)) {
@@ -300,7 +300,7 @@ export default class Graph<TNode: Node> {
     fromNodeId: NodeId,
     toNodeIds: $ReadOnlyArray<NodeId>,
     replaceFilter?: null | (NodeId => boolean),
-    type?: number = 0,
+    type?: TEdgeType = 0,
   ): void {
     this._assertHasNodeId(fromNodeId);
 
@@ -326,7 +326,7 @@ export default class Graph<TNode: Node> {
   traverse<TContext>(
     visit: GraphVisitor<NodeId, TContext>,
     startNodeId: ?NodeId,
-    type: number | Array<number> = 0,
+    type: TEdgeType | Array<TEdgeType> = 0,
   ): ?TContext {
     return this.dfs({
       visit,
@@ -339,7 +339,7 @@ export default class Graph<TNode: Node> {
     filter: (NodeId, TraversalActions) => ?TValue,
     visit: GraphVisitor<TValue, TContext>,
     startNodeId: ?NodeId,
-    type?: number | Array<number>,
+    type?: TEdgeType | Array<TEdgeType> = 0,
   ): ?TContext {
     return this.traverse(mapVisitor(filter, visit), startNodeId, type);
   }
@@ -347,7 +347,7 @@ export default class Graph<TNode: Node> {
   traverseAncestors<TContext>(
     startNodeId: ?NodeId,
     visit: GraphVisitor<NodeId, TContext>,
-    type: number | Array<number> = 0,
+    type: TEdgeType | Array<TEdgeType> = 0,
   ): ?TContext {
     return this.dfs({
       visit,
@@ -555,27 +555,27 @@ export function mapVisitor<NodeId, TValue, TContext>(
   };
 }
 
-type AdjacencyListMap = Map<NodeId, Map<number, Set<NodeId>>>;
-class AdjacencyList {
-  _listMap: AdjacencyListMap;
+type AdjacencyListMap<TEdgeType> = Map<NodeId, Map<TEdgeType, Set<NodeId>>>;
+class AdjacencyList<TEdgeType> {
+  _listMap: AdjacencyListMap<TEdgeType>;
 
-  constructor(listMap?: AdjacencyListMap) {
+  constructor(listMap?: AdjacencyListMap<TEdgeType>) {
     this._listMap = listMap ?? new Map();
   }
 
-  getListMap(): AdjacencyListMap {
+  getListMap(): AdjacencyListMap<TEdgeType> {
     return this._listMap;
   }
 
-  getEdges(from: NodeId, type: number): $ReadOnlySet<NodeId> {
+  getEdges(from: NodeId, type: TEdgeType): $ReadOnlySet<NodeId> {
     return this._listMap.get(from)?.get(type) ?? new Set();
   }
 
-  getEdgesByType(from: NodeId): $ReadOnlyMap<number, $ReadOnlySet<NodeId>> {
+  getEdgesByType(from: NodeId): $ReadOnlyMap<TEdgeType, $ReadOnlySet<NodeId>> {
     return this._listMap.get(from) ?? new Map();
   }
 
-  hasEdge(from: NodeId, to: NodeId, type: number): boolean {
+  hasEdge(from: NodeId, to: NodeId, type: TEdgeType): boolean {
     return Boolean(
       this._listMap
         .get(from)
@@ -584,10 +584,10 @@ class AdjacencyList {
     );
   }
 
-  addEdge(from: NodeId, to: NodeId, type: number): void {
+  addEdge(from: NodeId, to: NodeId, type: TEdgeType): void {
     let types = this._listMap.get(from);
     if (types == null) {
-      types = new Map<number, Set<NodeId>>();
+      types = new Map<TEdgeType, Set<NodeId>>();
       this._listMap.set(from, types);
     }
 
@@ -599,7 +599,7 @@ class AdjacencyList {
     adjacent.add(to);
   }
 
-  removeEdge(from: NodeId, to: NodeId, type: number): void {
+  removeEdge(from: NodeId, to: NodeId, type: TEdgeType): void {
     this._listMap
       .get(from)
       ?.get(type)

@@ -42,8 +42,21 @@ import {
   ERROR,
 } from './constants';
 
+export const RequestGraphEdgeTypes = {
+  subrequest: 1,
+  invalidated_by_update: 2,
+  invalidated_by_delete: 3,
+  invalidated_by_create: 4,
+  invalidated_by_create_above: 5,
+  dirname: 6,
+};
+
+type RequestGraphEdgeType = $Values<typeof RequestGraphEdgeTypes>;
 type SerializedRequestGraph = {|
-  ...SerializedContentGraph<RequestGraphNode>,
+  ...SerializedContentGraph<
+    RequestGraphNode,
+    RequestGraphEdgeType,
+  >,
   invalidNodeIds: Set<NodeId>,
   incompleteNodeIds: Set<NodeId>,
   globNodeIds: Set<NodeId>,
@@ -108,14 +121,6 @@ type RequestGraphNode =
 //   | 'invalidated_by_create_above'
 //   | 'dirname';
 
-export const RequestGraphEdgeType = {
-  subrequest: 1,
-  invalidated_by_update: 2,
-  invalidated_by_delete: 3,
-  invalidated_by_create: 4,
-  invalidated_by_create_above: 5,
-  dirname: 6,
-}
 export type RunAPI = {|
   invalidateOnFileCreate: FileCreateInvalidation => void,
   invalidateOnFileDelete: FilePath => void,
@@ -189,7 +194,7 @@ const nodeFromOption = (option: string, value: mixed) => ({
   },
 });
 
-export class RequestGraph extends ContentGraph<RequestGraphNode> {
+export class RequestGraph extends ContentGraph<RequestGraphNode, RequestGraphEdgeType> {
   invalidNodeIds: Set<NodeId> = new Set();
   incompleteNodeIds: Set<NodeId> = new Set();
   globNodeIds: Set<NodeId> = new Set();
@@ -289,7 +294,7 @@ export class RequestGraph extends ContentGraph<RequestGraphNode> {
       requestNodeId,
       subrequestNodeIds,
       null,
-      RequestGraphEdgeType.subrequest,
+      RequestGraphEdgeTypes.subrequest,
     );
   }
 
@@ -299,7 +304,10 @@ export class RequestGraph extends ContentGraph<RequestGraphNode> {
     node.invalidateReason |= reason;
     this.invalidNodeIds.add(nodeId);
 
-    let parentNodes = this.getNodeIdsConnectedTo(nodeId, RequestGraphEdgeType.subrequest);
+    let parentNodes = this.getNodeIdsConnectedTo(
+      nodeId,
+      RequestGraphEdgeTypes.subrequest,
+    );
     for (let parentNode of parentNodes) {
       this.invalidateNode(parentNode, reason);
     }
@@ -320,7 +328,7 @@ export class RequestGraph extends ContentGraph<RequestGraphNode> {
       if (env[node.value.key] !== node.value.value) {
         let parentNodes = this.getNodeIdsConnectedTo(
           nodeId,
-          RequestGraphEdgeType.invalidated_by_update,
+          RequestGraphEdgeTypes.invalidated_by_update,
         );
         for (let parentNode of parentNodes) {
           this.invalidateNode(parentNode, ENV_CHANGE);
@@ -336,7 +344,7 @@ export class RequestGraph extends ContentGraph<RequestGraphNode> {
       if (hashFromOption(options[node.value.key]) !== node.value.hash) {
         let parentNodes = this.getNodeIdsConnectedTo(
           nodeId,
-          RequestGraphEdgeType.invalidated_by_update,
+          RequestGraphEdgeTypes.invalidated_by_update,
         );
         for (let parentNode of parentNodes) {
           this.invalidateNode(parentNode, OPTION_CHANGE);
@@ -353,8 +361,18 @@ export class RequestGraph extends ContentGraph<RequestGraphNode> {
       fileNodeId = this.addNode(nodeFromFilePath(filePath));
     }
 
-    if (!this.hasEdge(requestNodeId, fileNodeId, RequestGraphEdgeType.invalidated_by_update)) {
-      this.addEdge(requestNodeId, fileNodeId, RequestGraphEdgeType.invalidated_by_update);
+    if (
+      !this.hasEdge(
+        requestNodeId,
+        fileNodeId,
+        RequestGraphEdgeTypes.invalidated_by_update,
+      )
+    ) {
+      this.addEdge(
+        requestNodeId,
+        fileNodeId,
+        RequestGraphEdgeTypes.invalidated_by_update,
+      );
     }
   }
 
@@ -366,8 +384,18 @@ export class RequestGraph extends ContentGraph<RequestGraphNode> {
       fileNodeId = this.addNode(nodeFromFilePath(filePath));
     }
 
-    if (!this.hasEdge(requestNodeId, fileNodeId, RequestGraphEdgeType.invalidated_by_delete)) {
-      this.addEdge(requestNodeId, fileNodeId, RequestGraphEdgeType.invalidated_by_delete);
+    if (
+      !this.hasEdge(
+        requestNodeId,
+        fileNodeId,
+        RequestGraphEdgeTypes.invalidated_by_delete,
+      )
+    ) {
+      this.addEdge(
+        requestNodeId,
+        fileNodeId,
+        RequestGraphEdgeTypes.invalidated_by_delete,
+      );
     }
   }
 
@@ -397,9 +425,17 @@ export class RequestGraph extends ContentGraph<RequestGraphNode> {
 
         if (
           lastNodeId != null &&
-          !this.hasEdge(lastNodeId, fileNameNodeId, RequestGraphEdgeType.dirname)
+          !this.hasEdge(
+            lastNodeId,
+            fileNameNodeId,
+            RequestGraphEdgeTypes.dirname,
+          )
         ) {
-          this.addEdge(lastNodeId, fileNameNodeId, RequestGraphEdgeType.dirname);
+          this.addEdge(
+            lastNodeId,
+            fileNameNodeId,
+            RequestGraphEdgeTypes.dirname,
+          );
         }
 
         lastNodeId = fileNameNodeId;
@@ -426,13 +462,33 @@ export class RequestGraph extends ContentGraph<RequestGraphNode> {
       // node will be invalidated.
       let firstId = 'file_name:' + parts[0];
       let firstNodeId = this.getNodeIdByContentKey(firstId);
-      if (!this.hasEdge(nodeId, firstNodeId, RequestGraphEdgeType.invalidated_by_create_above)) {
-        this.addEdge(nodeId, firstNodeId, RequestGraphEdgeType.invalidated_by_create_above);
+      if (
+        !this.hasEdge(
+          nodeId,
+          firstNodeId,
+          RequestGraphEdgeTypes.invalidated_by_create_above,
+        )
+      ) {
+        this.addEdge(
+          nodeId,
+          firstNodeId,
+          RequestGraphEdgeTypes.invalidated_by_create_above,
+        );
       }
 
       invariant(lastNodeId != null);
-      if (!this.hasEdge(lastNodeId, nodeId, RequestGraphEdgeType.invalidated_by_create_above)) {
-        this.addEdge(lastNodeId, nodeId, RequestGraphEdgeType.invalidated_by_create_above);
+      if (
+        !this.hasEdge(
+          lastNodeId,
+          nodeId,
+          RequestGraphEdgeTypes.invalidated_by_create_above,
+        )
+      ) {
+        this.addEdge(
+          lastNodeId,
+          nodeId,
+          RequestGraphEdgeTypes.invalidated_by_create_above,
+        );
       }
     } else if (input.filePath != null) {
       node = nodeFromFilePath(input.filePath);
@@ -446,8 +502,18 @@ export class RequestGraph extends ContentGraph<RequestGraphNode> {
     } else {
       nodeId = this.addNode(node);
     }
-    if (!this.hasEdge(requestNodeId, nodeId, RequestGraphEdgeType.invalidated_by_create)) {
-      this.addEdge(requestNodeId, nodeId, RequestGraphEdgeType.invalidated_by_create);
+    if (
+      !this.hasEdge(
+        requestNodeId,
+        nodeId,
+        RequestGraphEdgeTypes.invalidated_by_create,
+      )
+    ) {
+      this.addEdge(
+        requestNodeId,
+        nodeId,
+        RequestGraphEdgeTypes.invalidated_by_create,
+      );
     }
   }
 
@@ -469,8 +535,18 @@ export class RequestGraph extends ContentGraph<RequestGraphNode> {
       envNodeId = this.addNode(envNode);
     }
 
-    if (!this.hasEdge(requestNodeId, envNodeId, RequestGraphEdgeType.invalidated_by_update)) {
-      this.addEdge(requestNodeId, envNodeId, RequestGraphEdgeType.invalidated_by_update);
+    if (
+      !this.hasEdge(
+        requestNodeId,
+        envNodeId,
+        RequestGraphEdgeTypes.invalidated_by_update,
+      )
+    ) {
+      this.addEdge(
+        requestNodeId,
+        envNodeId,
+        RequestGraphEdgeTypes.invalidated_by_update,
+      );
     }
   }
 
@@ -487,16 +563,41 @@ export class RequestGraph extends ContentGraph<RequestGraphNode> {
       optionNodeId = this.addNode(optionNode);
     }
 
-    if (!this.hasEdge(requestNodeId, optionNodeId, RequestGraphEdgeType.invalidated_by_update)) {
-      this.addEdge(requestNodeId, optionNodeId, RequestGraphEdgeType.invalidated_by_update);
+    if (
+      !this.hasEdge(
+        requestNodeId,
+        optionNodeId,
+        RequestGraphEdgeTypes.invalidated_by_update,
+      )
+    ) {
+      this.addEdge(
+        requestNodeId,
+        optionNodeId,
+        RequestGraphEdgeTypes.invalidated_by_update,
+      );
     }
   }
 
   clearInvalidations(nodeId: NodeId) {
     this.unpredicatableNodeIds.delete(nodeId);
-    this.replaceNodeIdsConnectedTo(nodeId, [], null, RequestGraphEdgeType.invalidated_by_update);
-    this.replaceNodeIdsConnectedTo(nodeId, [], null, RequestGraphEdgeType.invalidated_by_delete);
-    this.replaceNodeIdsConnectedTo(nodeId, [], null, RequestGraphEdgeType.invalidated_by_create);
+    this.replaceNodeIdsConnectedTo(
+      nodeId,
+      [],
+      null,
+      RequestGraphEdgeTypes.invalidated_by_update,
+    );
+    this.replaceNodeIdsConnectedTo(
+      nodeId,
+      [],
+      null,
+      RequestGraphEdgeTypes.invalidated_by_delete,
+    );
+    this.replaceNodeIdsConnectedTo(
+      nodeId,
+      [],
+      null,
+      RequestGraphEdgeTypes.invalidated_by_create,
+    );
   }
 
   getInvalidations(requestNodeId: NodeId): Array<RequestInvalidation> {
@@ -507,7 +608,7 @@ export class RequestGraph extends ContentGraph<RequestGraphNode> {
     // For now just handling updates. Could add creates/deletes later if needed.
     let invalidations = this.getNodeIdsConnectedFrom(
       requestNodeId,
-      RequestGraphEdgeType.invalidated_by_update,
+      RequestGraphEdgeTypes.invalidated_by_update,
     );
     return invalidations
       .map(nodeId => {
@@ -529,7 +630,10 @@ export class RequestGraph extends ContentGraph<RequestGraphNode> {
       return [];
     }
 
-    let subRequests = this.getNodeIdsConnectedFrom(requestNodeId, RequestGraphEdgeType.subrequest);
+    let subRequests = this.getNodeIdsConnectedFrom(
+      requestNodeId,
+      RequestGraphEdgeTypes.subrequest,
+    );
 
     return subRequests.map(nodeId => {
       let node = nullthrows(this.getNode(nodeId));
@@ -552,12 +656,16 @@ export class RequestGraph extends ContentGraph<RequestGraphNode> {
     for (let matchNode of matchNodes) {
       let matchNodeId = this.getNodeIdByContentKey(matchNode.id);
       if (
-        this.hasEdge(nodeId, matchNodeId, RequestGraphEdgeType.invalidated_by_create_above) &&
+        this.hasEdge(
+          nodeId,
+          matchNodeId,
+          RequestGraphEdgeTypes.invalidated_by_create_above,
+        ) &&
         isDirectoryInside(path.dirname(matchNode.value.filePath), dirname)
       ) {
         let connectedNodes = this.getNodeIdsConnectedTo(
           matchNodeId,
-          RequestGraphEdgeType.invalidated_by_create,
+          RequestGraphEdgeTypes.invalidated_by_create,
         );
         for (let connectedNode of connectedNodes) {
           this.invalidateNode(connectedNode, FILE_CREATE);
@@ -573,7 +681,7 @@ export class RequestGraph extends ContentGraph<RequestGraphNode> {
         this.hasEdge(
           nodeId,
           this.getNodeIdByContentKey('file_name:' + basename),
-          RequestGraphEdgeType.dirname,
+          RequestGraphEdgeTypes.dirname,
         )
       ) {
         let parent = nullthrows(
@@ -595,7 +703,10 @@ export class RequestGraph extends ContentGraph<RequestGraphNode> {
       // then also invalidate nodes connected by invalidated_by_update edges.
       if (hasFileRequest && (type === 'create' || type === 'update')) {
         let nodeId = this.getNodeIdByContentKey(filePath);
-        let nodes = this.getNodeIdsConnectedTo(nodeId, RequestGraphEdgeType.invalidated_by_update);
+        let nodes = this.getNodeIdsConnectedTo(
+          nodeId,
+          RequestGraphEdgeTypes.invalidated_by_update,
+        );
 
         for (let connectedNode of nodes) {
           didInvalidate = true;
@@ -605,7 +716,7 @@ export class RequestGraph extends ContentGraph<RequestGraphNode> {
         if (type === 'create') {
           let nodes = this.getNodeIdsConnectedTo(
             nodeId,
-            RequestGraphEdgeType.invalidated_by_create,
+            RequestGraphEdgeTypes.invalidated_by_create,
           );
           for (let connectedNode of nodes) {
             didInvalidate = true;
@@ -622,7 +733,7 @@ export class RequestGraph extends ContentGraph<RequestGraphNode> {
           // Find potential file nodes to be invalidated if this file name pattern matches
           let above = this.getNodeIdsConnectedTo(
             fileNameNodeId,
-            RequestGraphEdgeType.invalidated_by_create_above,
+            RequestGraphEdgeTypes.invalidated_by_create_above,
           ).map(nodeId => {
             let node = nullthrows(this.getNode(nodeId));
             invariant(node.type === 'file');
@@ -642,7 +753,7 @@ export class RequestGraph extends ContentGraph<RequestGraphNode> {
           if (isGlobMatch(filePath, globNode.value)) {
             let connectedNodes = this.getNodeIdsConnectedTo(
               globeNodeId,
-              RequestGraphEdgeType.invalidated_by_create,
+              RequestGraphEdgeTypes.invalidated_by_create,
             );
             for (let connectedNode of connectedNodes) {
               didInvalidate = true;
@@ -654,7 +765,7 @@ export class RequestGraph extends ContentGraph<RequestGraphNode> {
         let nodeId = this.getNodeIdByContentKey(filePath);
         for (let connectedNode of this.getNodeIdsConnectedTo(
           nodeId,
-          RequestGraphEdgeType.invalidated_by_delete,
+          RequestGraphEdgeTypes.invalidated_by_delete,
         )) {
           didInvalidate = true;
           this.invalidateNode(connectedNode, FILE_DELETE);

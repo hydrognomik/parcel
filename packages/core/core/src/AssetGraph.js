@@ -35,8 +35,10 @@ type InitOpts = {|
   assetGroups?: Array<AssetGroup>,
 |};
 
+type AssetGraphEdgeType = number;
+
 type SerializedAssetGraph = {|
-  ...SerializedContentGraph<AssetGraphNode>,
+  ...SerializedContentGraph<AssetGraphNode, AssetGraphEdgeType>,
   hash?: ?string,
 |};
 
@@ -99,7 +101,7 @@ export function nodeFromEntryFile(entry: Entry): EntryFileNode {
   };
 }
 
-export default class AssetGraph extends ContentGraph<AssetGraphNode> {
+export default class AssetGraph extends ContentGraph<AssetGraphNode, AssetGraphEdgeType> {
   onNodeRemoved: ?(nodeId: NodeId) => mixed;
   hash: ?string;
   envCache: Map<string, Environment>;

@@ -56,6 +56,8 @@ export const BundleGraphEdgeTypes = {
   internal_async: 4,
 };
 
+type BundleGraphEdgeType = $Values<typeof BundleGraphEdgeTypes>;
+
 // type BundleGraphEdgeTypes =
 //   // A lack of an edge type indicates to follow the edge while traversing
 //   // the bundle's contents, e.g. `bundle.traverse()` during packaging.
@@ -94,7 +96,7 @@ type InternalExportSymbolResolution = {|
 
 type SerializedBundleGraph = {|
   $$raw: true,
-  graph: SerializedContentGraph<BundleGraphNode>,
+  graph: SerializedContentGraph<BundleGraphNode, BundleGraphEdgeType>,
   bundleContentHashes: Map<string, string>,
   assetPublicIds: Set<string>,
   publicIdByAssetId: Map<string, string>,
@@ -122,7 +124,7 @@ export default class BundleGraph {
   // It needs to be exposed in BundlerRunner for now based on how applying runtimes works and the
   // BundlerRunner takes care of invalidating hashes when runtimes are applied, but this is not ideal.
   _bundleContentHashes: Map<string, string>;
-  _graph: ContentGraph<BundleGraphNode>;
+  _graph: ContentGraph<BundleGraphNode, BundleGraphEdgeType>;
 
   constructor({
     graph,
@@ -130,7 +132,7 @@ export default class BundleGraph {
     assetPublicIds,
     bundleContentHashes,
   }: {|
-    graph: ContentGraph<BundleGraphNode>,
+    graph: ContentGraph<BundleGraphNode, BundleGraphEdgeType>,
     publicIdByAssetId: Map<string, string>,
     assetPublicIds: Set<string>,
     bundleContentHashes: Map<string, string>,
@@ -146,7 +148,7 @@ export default class BundleGraph {
     publicIdByAssetId: Map<string, string> = new Map(),
     assetPublicIds: Set<string> = new Set(),
   ): BundleGraph {
-    let graph = new ContentGraph<BundleGraphNode>();
+    let graph = new ContentGraph<BundleGraphNode, BundleGraphEdgeType>();
     let assetGroupIds = new Set();
     let assetGraphNodeIdToBundleGraphNodeId = new Map<NodeId, NodeId>();
 
