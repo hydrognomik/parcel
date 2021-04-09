@@ -4,12 +4,12 @@ import Graph, {type GraphOpts} from './Graph';
 import type {ContentKey, Node, NodeId} from './types';
 import nullthrows from 'nullthrows';
 
-export type SerializedContentGraph<TNode: Node, TEdgeType: number> = {|
+export type SerializedContentGraph<TNode: Node, TEdgeType: number = 0> = {|
   ...GraphOpts<TNode, TEdgeType>,
   _contentKeyToNodeId: Map<ContentKey, NodeId>,
 |};
 
-export default class ContentGraph<TNode: Node, TEdgeType: number> extends Graph<TNode, TEdgeType> {
+export default class ContentGraph<TNode: Node, TEdgeType: number = 0> extends Graph<TNode, TEdgeType> {
   _contentKeyToNodeId: Map<ContentKey, NodeId>;
 
   constructor(opts: ?SerializedContentGraph<TNode, TEdgeType>) {
