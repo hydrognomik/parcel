@@ -107,7 +107,11 @@ export default class MutableBundleGraph extends BundleGraph<IBundle>
     );
     this.#graph._graph.addEdge(dependencyNodeId, bundleGroupNodeId);
     this.#graph._graph.replaceNodeIdsConnectedTo(bundleGroupNodeId, assetNodes);
-    this.#graph._graph.addEdge(dependencyNodeId, resolvedNodeId, BundleGraphEdgeTypes.references);
+    this.#graph._graph.addEdge(
+      dependencyNodeId,
+      resolvedNodeId,
+      BundleGraphEdgeTypes.references,
+    );
     this.#graph._graph.removeEdge(dependencyNodeId, resolvedNodeId);
 
     if (dependency.isEntry) {

@@ -53,10 +53,7 @@ export const RequestGraphEdgeTypes = {
 
 type RequestGraphEdgeType = $Values<typeof RequestGraphEdgeTypes>;
 type SerializedRequestGraph = {|
-  ...SerializedContentGraph<
-    RequestGraphNode,
-    RequestGraphEdgeType,
-  >,
+  ...SerializedContentGraph<RequestGraphNode, RequestGraphEdgeType>,
   invalidNodeIds: Set<NodeId>,
   incompleteNodeIds: Set<NodeId>,
   globNodeIds: Set<NodeId>,
@@ -194,7 +191,10 @@ const nodeFromOption = (option: string, value: mixed) => ({
   },
 });
 
-export class RequestGraph extends ContentGraph<RequestGraphNode, RequestGraphEdgeType> {
+export class RequestGraph extends ContentGraph<
+  RequestGraphNode,
+  RequestGraphEdgeType,
+> {
   invalidNodeIds: Set<NodeId> = new Set();
   incompleteNodeIds: Set<NodeId> = new Set();
   globNodeIds: Set<NodeId> = new Set();

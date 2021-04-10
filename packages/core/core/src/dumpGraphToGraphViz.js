@@ -3,6 +3,7 @@
 import type {Environment} from './types';
 
 import type Graph from './Graph';
+import type BundleGraphEdgeType from './BundleGraph';
 import type {AssetGraphNode, BundleGraphNode} from './types';
 
 import path from 'path';
@@ -30,7 +31,7 @@ const TYPE_COLORS = {
 
 export default async function dumpGraphToGraphViz(
   // $FlowFixMe
-  graph: Graph<AssetGraphNode, AssetGraphEdgeType> | Graph<BundleGraphNode, BundleGraphEdgeType>,
+  graph: Graph<AssetGraphNode> | Graph<BundleGraphNode, BundleGraphEdgeType>,
   name: string,
 ): Promise<void> {
   if (

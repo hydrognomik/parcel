@@ -9,7 +9,10 @@ export type SerializedContentGraph<TNode: Node, TEdgeType: number = 0> = {|
   _contentKeyToNodeId: Map<ContentKey, NodeId>,
 |};
 
-export default class ContentGraph<TNode: Node, TEdgeType: number = 0> extends Graph<TNode, TEdgeType> {
+export default class ContentGraph<
+  TNode: Node,
+  TEdgeType: number = 0,
+> extends Graph<TNode, TEdgeType> {
   _contentKeyToNodeId: Map<ContentKey, NodeId>;
 
   constructor(opts: ?SerializedContentGraph<TNode, TEdgeType>) {
@@ -24,7 +27,9 @@ export default class ContentGraph<TNode: Node, TEdgeType: number = 0> extends Gr
   }
 
   // $FlowFixMe[prop-missing]
-  static deserialize(opts: SerializedContentGraph<TNode, TEdgeType>): ContentGraph<TNode, TEdgeType> {
+  static deserialize(
+    opts: SerializedContentGraph<TNode, TEdgeType>,
+  ): ContentGraph<TNode, TEdgeType> {
     return new ContentGraph(opts);
   }
 

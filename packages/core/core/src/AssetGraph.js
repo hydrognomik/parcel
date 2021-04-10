@@ -35,7 +35,6 @@ type InitOpts = {|
   assetGroups?: Array<AssetGroup>,
 |};
 
-
 type SerializedAssetGraph = {|
   ...SerializedContentGraph<AssetGraphNode>,
   hash?: ?string,

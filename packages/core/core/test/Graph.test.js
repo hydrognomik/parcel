@@ -114,9 +114,7 @@ describe('Graph', () => {
     assert(graph.nodes.has(nodeD));
     assert(!graph.nodes.has(nodeB));
     assert(!graph.nodes.has(nodeC));
-    assert.deepEqual(graph.getAllEdges(), [
-      {from: nodeA, to: nodeD, type: 0},
-    ]);
+    assert.deepEqual(graph.getAllEdges(), [{from: nodeA, to: nodeD, type: 0}]);
   });
 
   it('removing a node recursively deletes orphaned nodes', () => {
