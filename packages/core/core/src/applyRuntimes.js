@@ -19,7 +19,7 @@ import invariant from 'assert';
 import nullthrows from 'nullthrows';
 import AssetGraph, {nodeFromAssetGroup} from './AssetGraph';
 import BundleGraph from './public/BundleGraph';
-import InternalBundleGraph from './BundleGraph';
+import InternalBundleGraph, {BundleGraphEdgeTypes} from './BundleGraph';
 import {NamedBundle} from './public/Bundle';
 import {PluginLogger} from '@parcel/logger';
 import ThrowableDiagnostic, {errorToDiagnostic} from '@parcel/diagnostic';
@@ -203,7 +203,11 @@ export default async function applyRuntimes({
         const bundleGraphNodeId = bundleGraph._graph.getNodeIdByContentKey(
           node.id,
         ); // the node id is not constant between graphs
-        bundleGraph._graph.addEdge(bundleNodeId, bundleGraphNodeId, 1); // TODO: change this
+        bundleGraph._graph.addEdge(
+          bundleNodeId,
+          bundleGraphNodeId,
+          BundleGraphEdgeTypes.contains,
+        );
       }
     }, runtimesGraphRuntimeNodeId);
 
